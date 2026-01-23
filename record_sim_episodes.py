@@ -26,15 +26,16 @@ def main(args):
     task_name = args['task_name']
     dataset_dir = args['dataset_dir']
     num_episodes = args['num_episodes']
-    onscreen_render = args['onscreen_render']
+    onscreen_render = False # args['onscreen_render']
     inject_noise = False
-    render_cam_name = 'angle'
+    render_cam_name = 'top'
 
     if not os.path.isdir(dataset_dir):
         os.makedirs(dataset_dir, exist_ok=True)
 
     episode_len = SIM_TASK_CONFIGS[task_name]['episode_len']
     camera_names = SIM_TASK_CONFIGS[task_name]['camera_names']
+    print("Avail cam names:", camera_names)
     if task_name == 'sim_transfer_cube_scripted':
         policy_cls = PickAndTransferPolicy
     elif task_name == 'sim_insertion_scripted':

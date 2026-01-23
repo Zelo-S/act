@@ -36,6 +36,10 @@ def main(args):
     dataset_name = f'episode_{episode_idx}'
 
     qpos, qvel, action, image_dict = load_hdf5(dataset_dir, dataset_name)
+    print("Image dict:", image_dict.keys())
+    del image_dict['angle']
+    del image_dict['left_wrist']
+    del image_dict['top']
     save_videos(image_dict, DT, video_path=os.path.join(dataset_dir, dataset_name + '_video.mp4'))
     visualize_joints(qpos, action, plot_path=os.path.join(dataset_dir, dataset_name + '_qpos.png'))
     # visualize_timestamp(t_list, dataset_path) # TODO addn timestamp back

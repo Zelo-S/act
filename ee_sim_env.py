@@ -137,7 +137,9 @@ class BimanualViperXEETask(base.Task):
         obs['images'] = dict()
         obs['images']['top'] = physics.render(height=480, width=640, camera_id='top')
         obs['images']['angle'] = physics.render(height=480, width=640, camera_id='angle')
-        obs['images']['vis'] = physics.render(height=480, width=640, camera_id='front_close')
+        # obs['images']['vis'] = physics.render(height=480, width=640, camera_id='front_close')
+        obs['images']['left_wrist'] = physics.render(height=480, width=640, camera_id='right_wrist')
+        obs['images']['right_wrist'] = physics.render(height=480, width=640, camera_id='left_wrist')
         # used in scripted policy to obtain starting pose
         obs['mocap_pose_left'] = np.concatenate([physics.data.mocap_pos[0], physics.data.mocap_quat[0]]).copy()
         obs['mocap_pose_right'] = np.concatenate([physics.data.mocap_pos[1], physics.data.mocap_quat[1]]).copy()
