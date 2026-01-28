@@ -89,7 +89,7 @@ class StackCubesPolicy(BasePolicy):
 
         self.left_trajectory = [
             {"t": 0, "xyz": init_mocap_pose_left[:3], "quat": init_mocap_pose_left[3:], "gripper": 0}, # sleep
-            {"t": 90, "xyz": green_box_xyz + np.array([0, 0, 0.1]), "quat": left_gripper_pick_quat.elements, "gripper": 1}, # approach the cube
+            {"t": 90, "xyz": green_box_xyz + np.array([0, 0, 0.01]), "quat": left_gripper_pick_quat.elements, "gripper": 1}, # approach the cube
             {"t": 130, "xyz": green_box_xyz + np.array([0, 0, -0.015]), "quat": left_gripper_pick_quat.elements, "gripper": 1}, # go down
             {"t": 170, "xyz": green_box_xyz + np.array([0, 0, -0.015]), "quat": left_gripper_pick_quat.elements, "gripper": 0}, # close gripper
             {"t": 180, "xyz": green_meet_xyz - np.array([0.05, 0, 0]), "quat": left_gripper_pick_quat.elements, "gripper": 0}, # approach meet position
