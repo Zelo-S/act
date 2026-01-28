@@ -8,7 +8,7 @@ import h5py
 from constants import PUPPET_GRIPPER_POSITION_NORMALIZE_FN, SIM_TASK_CONFIGS
 from ee_sim_env import make_ee_sim_env
 from sim_env import make_sim_env, BOX_POSE
-from scripted_policy import PickAndTransferPolicy, InsertionPolicy, StackCubesPolicy
+from scripted_policy import PickAndTransferPolicy, InsertionPolicy, StackCubesPolicy, PPSocketCubePolicy
 
 import IPython
 e = IPython.embed
@@ -42,6 +42,8 @@ def main(args):
         policy_cls = StackCubesPolicy
     elif task_name == 'sim_insertion_scripted':
         policy_cls = InsertionPolicy
+    elif task_name == 'sim_pp_socket_cube_scripted':
+        policy_cls = PPSocketCubePolicy
     else:
         raise NotImplementedError
 

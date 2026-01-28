@@ -63,6 +63,55 @@ class BasePolicy:
         self.step_count += 1
         return np.concatenate([action_left, action_right])
 
+class PPSocketCubePolicy(BasePolicy):
+
+    def generate_trajectory(self, ts_first):
+        init_mocap_pose_right = ts_first.observation['mocap_pose_right']
+        init_mocap_pose_left = ts_first.observation['mocap_pose_left']
+
+        both_box_info = np.array(ts_first.observation['env_state'])
+        red_box_xyz = both_box_info[:3]
+        red_box_quat = both_box_info[3:7]
+        blue_socket_xyz = both_box_info[7:10]
+        blue_socket_quat = both_box_info[10:14]
+        # print(f"Generate trajectory for {box_xyz=}")
+
+        right_gripper_pick_quat = Quaternion(init_mocap_pose_right[3:])
+        right_gripper_pick_quat = right_gripper_pick_quat * Quaternion(axis=[0.0, 1.0, 0.0], degrees=-60)
+
+        left_gripper_pick_quat = Quaternion(init_mocap_pose_left[3:])
+        left_gripper_pick_quat = left_gripper_pick_quat * Quaternion(axis=[0.0, 1.0, 0.0], degrees=30)
+
+        meet_left_quat = Quaternion(axis=[1.0, 0.0, 0.0], degrees=90)
+
+        red_meet_xyz = np.array([0, 0.5, 0.12])
+        blue_meet_xyz = np.array([0, 0.5, 0.05])
+
+        self.left_trajectory = [
+            {"t": 0, "xyz": init_mocap_pose_left[:3], "quat": init_mocap_pose_left[3:], "gripper": 0}, # sleep
+            {"t": 90, "xyz": blue_socket_xyz + np.array([0, 0, 0.01]), "quat": left_gripper_pick_quat.elements, "gripper": 1}, # approach the cube
+            {"t": 130, "xyz": blue_socket_xyz + np.array([0, 0, -0.015]), "quat": left_gripper_pick_quat.elements, "gripper": 1}, # go down
+            {"t": 170, "xyz": blue_socket_xyz + np.array([0, 0, -0.015]), "quat": left_gripper_pick_quat.elements, "gripper": 0}, # close gripper
+            {"t": 180, "xyz": blue_meet_xyz - np.array([0.05, 0, 0]), "quat": left_gripper_pick_quat.elements, "gripper": 0}, # approach meet position
+            {"t": 220, "xyz": blue_meet_xyz - np.array([0.05, 0, 0]), "quat": left_gripper_pick_quat.elements, "gripper": 0}, # approach meet position
+            {"t": 240, "xyz": blue_meet_xyz, "quat": left_gripper_pick_quat.elements, "gripper": 0}, # approach meet position
+            {"t": 360, "xyz": blue_meet_xyz, "quat": left_gripper_pick_quat.elements, "gripper": 0}, # stay
+            {"t": 380, "xyz": blue_meet_xyz - np.array([0, 0, 0.01]), "quat": left_gripper_pick_quat.elements, "gripper": 1}, # drop the socket + cube inside
+            {"t": 400, "xyz": blue_meet_xyz - np.array([0.1, 0, -0.1]), "quat": left_gripper_pick_quat.elements, "gripper": 1}, # move-left
+        ]
+
+        self.right_trajectory = [
+            {"t": 0, "xyz": init_mocap_pose_right[:3], "quat": init_mocap_pose_right[3:], "gripper": 0}, # sleep
+            {"t": 90, "xyz": red_box_xyz + np.array([0, 0, 0.08]), "quat": right_gripper_pick_quat.elements, "gripper": 1}, # approach the cube
+            {"t": 130, "xyz": red_box_xyz + np.array([0, 0, -0.015]), "quat": right_gripper_pick_quat.elements, "gripper": 1}, # go down
+            {"t": 170, "xyz": red_box_xyz + np.array([0, 0, -0.015]), "quat": right_gripper_pick_quat.elements, "gripper": 0}, # close gripper
+            {"t": 200, "xyz": red_meet_xyz + np.array([0.05, 0, 0]), "quat": right_gripper_pick_quat.elements, "gripper": 0}, # approach meet position
+            {"t": 220, "xyz": red_meet_xyz, "quat": right_gripper_pick_quat.elements, "gripper": 0}, # move to meet position
+            {"t": 310, "xyz": red_meet_xyz, "quat": right_gripper_pick_quat.elements, "gripper": 1}, # open gripper
+            {"t": 400, "xyz": red_meet_xyz + np.array([0.1, 0, 0]), "quat": right_gripper_pick_quat.elements, "gripper": 1},
+        ]
+
+
 class StackCubesPolicy(BasePolicy):
 
     def generate_trajectory(self, ts_first):
@@ -208,6 +257,8 @@ def test_policy(task_name):
         env = make_ee_sim_env('sim_stack_cubes')
     elif 'sim_insertion' in task_name:
         env = make_ee_sim_env('sim_insertion')
+    elif 'sim_pp_socket_cube' in task_name:
+        env = make_ee_sim_env('sim_pp_socket_cube')
     else:
         raise NotImplementedError
 
@@ -223,6 +274,8 @@ def test_policy(task_name):
             policy = PickAndTransferPolicy(inject_noise)
         if 'sim_stack_cubes' in task_name:
             policy = StackCubesPolicy(inject_noise)
+        if 'sim_pp_socket' in task_name:
+            policy = PPSocketCubePolicy(inject_noise)
         for step in range(episode_len):
             action = policy(ts)
             ts = env.step(action)
@@ -240,6 +293,6 @@ def test_policy(task_name):
 
 
 if __name__ == '__main__':
-    test_task_name = 'sim_stack_cubes_scripted'
+    test_task_name = 'sim_pp_socket_cube_scripted'
     test_policy(test_task_name)
 
