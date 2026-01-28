@@ -47,6 +47,12 @@ def make_sim_env(task_name):
         task = InsertionTask(random=False)
         env = control.Environment(physics, task, time_limit=20, control_timestep=DT,
                                   n_sub_steps=None, flat_observation=False)
+    elif 'sim_stack_cubes' in task_name:
+        xml_path = os.path.join(XML_DIR, f'bimanual_viperx_stack_cubes.xml')
+        physics = mujoco.Physics.from_xml_path(xml_path)
+        task = StackCubesTask(random=False)
+        env = control.Environment(physics, task, time_limit=40, control_timestep=DT, # TODO: Change DT later
+                                  n_sub_steps=None, flat_observation=False)
     else:
         raise NotImplementedError
     return env
@@ -119,6 +125,58 @@ class BimanualViperXTask(base.Task):
         # return whether left gripper is holding the box
         raise NotImplementedError
 
+class StackCubesTask(BimanualViperXTask):
+    def __init__(self, random=None):
+        super().__init__(random=random)
+        self.max_reward = 5
+
+    def initialize_episode(self, physics):
+        """Sets the state of the environment at the start of each episode."""
+        # TODO Notice: this function does not randomize the env configuration. Instead, set BOX_POSE from outside
+        # reset qpos, control and box position
+        with physics.reset_context():
+            physics.named.data.qpos[:16] = START_ARM_POSE
+            np.copyto(physics.data.ctrl, START_ARM_POSE)
+            assert BOX_POSE[0] is not None
+            physics.named.data.qpos[-14:] = BOX_POSE[0] # TODO: BOX_POSE will need to set both GREEN AND RED
+            # print(f"{BOX_POSE=}")
+        super().initialize_episode(physics)
+
+    @staticmethod
+    def get_env_state(physics):
+        env_state = physics.data.qpos.copy()[16:]
+        return env_state
+
+    def get_reward(self, physics):
+        # return whether left gripper is holding the box
+        all_contact_pairs = []
+        for i_contact in range(physics.data.ncon):
+            id_geom_1 = physics.data.contact[i_contact].geom1
+            id_geom_2 = physics.data.contact[i_contact].geom2
+            name_geom_1 = physics.model.id2name(id_geom_1, 'geom')
+            name_geom_2 = physics.model.id2name(id_geom_2, 'geom')
+            contact_pair = (name_geom_1, name_geom_2)
+            all_contact_pairs.append(contact_pair)
+        
+        touch_left_gripper = ("green_box", "vx300s_left/10_left_gripper_finger") in all_contact_pairs
+        touch_right_gripper = ("red_box", "vx300s_right/10_right_gripper_finger") in all_contact_pairs
+        red_green_box_touch = ("red_box", "green_box") in all_contact_pairs # TODO: for some reason, has to be in this exact order...
+        green_red_box_touch = ("green_box", "red_box") in all_contact_pairs # TODO: for some reason, has to be in this exact order...
+        green_touch_table = ("green_box", "table") in all_contact_pairs
+        red_touch_table = ("red_box", "table") in all_contact_pairs
+
+        reward = 0
+        if touch_left_gripper: # Pick up green first
+            reward = 1
+        if touch_left_gripper and not green_touch_table: # lifted green
+            reward = 2
+        if touch_right_gripper: # picked up red next
+            reward = 3
+        if touch_right_gripper and not red_touch_table: # lifted red
+            reward = 4
+        if green_red_box_touch or red_green_box_touch: # stacked green on red
+            reward = 5
+        return reward
 
 class TransferCubeTask(BimanualViperXTask):
     def __init__(self, random=None):

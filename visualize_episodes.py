@@ -37,9 +37,9 @@ def main(args):
 
     qpos, qvel, action, image_dict = load_hdf5(dataset_dir, dataset_name)
     print("Image dict:", image_dict.keys())
-    del image_dict['angle']
-    del image_dict['left_wrist']
     del image_dict['top']
+    del image_dict['left_wrist']
+    del image_dict['right_wrist']
     save_videos(image_dict, DT, video_path=os.path.join(dataset_dir, dataset_name + '_video.mp4'))
     visualize_joints(qpos, action, plot_path=os.path.join(dataset_dir, dataset_name + '_qpos.png'))
     # visualize_timestamp(t_list, dataset_path) # TODO addn timestamp back
@@ -48,6 +48,7 @@ def main(args):
 def save_videos(video, dt, video_path=None):
     if isinstance(video, list):
         cam_names = list(video[0].keys())
+        print("Vis on cam: ", cam_names[0])
         h, w, _ = video[0][cam_names[0]].shape
         w = w * len(cam_names)
         fps = int(1/dt)
@@ -64,6 +65,7 @@ def save_videos(video, dt, video_path=None):
         print(f'Saved video to: {video_path}')
     elif isinstance(video, dict):
         cam_names = list(video.keys())
+        print("Cam names:", cam_names)
         all_cam_videos = []
         for cam_name in cam_names:
             all_cam_videos.append(video[cam_name])

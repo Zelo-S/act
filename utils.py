@@ -130,8 +130,8 @@ def load_data(dataset_dir, num_episodes, camera_names, batch_size_train, batch_s
 
 ### env utils
 
-def sample_box_pose():
-    x_range = [0.0, 0.2]
+def sample_box_pose(min_x_offset=0.0, max_x_offset=0.0):
+    x_range = [0.0+min_x_offset, 0.2+max_x_offset]
     y_range = [0.4, 0.6]
     z_range = [0.05, 0.05]
 
