@@ -259,25 +259,28 @@ class StackCubesEETask(BimanualViperXEETask):
             all_contact_pairs.append(contact_pair)
         
 
-        touch_left_gripper = ("green_box", "vx300s_left/10_left_gripper_finger") in all_contact_pairs
-        touch_right_gripper = ("red_box", "vx300s_right/10_right_gripper_finger") in all_contact_pairs
-        red_green_box_touch = ("red_box", "green_box") in all_contact_pairs 
-        green_red_box_touch = ("green_box", "red_box") in all_contact_pairs 
+        touch_left_gripper_L = ("red_box", "vx300s_left/10_left_gripper_finger") in all_contact_pairs
+        touch_left_gripper_R = ("red_box", "vx300s_left/10_right_gripper_finger") in all_contact_pairs
+        touch_right_gripper_L = ("red_box", "vx300s_right/10_left_gripper_finger") in all_contact_pairs
+        touch_right_gripper_R = ("red_box", "vx300s_right/10_right_gripper_finger") in all_contact_pairs
+        red_green_box_touch = ("red_box", "green_box") in all_contact_pairs
+        green_red_box_touch = ("green_box", "red_box") in all_contact_pairs
         green_touch_table = ("green_box", "table") in all_contact_pairs
         red_touch_table = ("red_box", "table") in all_contact_pairs
 
         reward = 0
-        if touch_left_gripper: # Pick up green first
+        if touch_left_gripper_L or touch_left_gripper_R: # Contact green first
             reward = 1
-        if touch_left_gripper and not green_touch_table: # lifted green
+        if touch_left_gripper_L and touch_left_gripper_R and not green_touch_table: # lifted green
             reward = 2
-        if touch_right_gripper: # picked up red next
+        if touch_right_gripper_L or touch_right_gripper_R: # contact red next
             reward = 3
-        if touch_right_gripper and not red_touch_table: # lifted red
+        if touch_right_gripper_L and touch_right_gripper_R and not red_touch_table: # lifted red
             reward = 4
-        if red_green_box_touch or green_red_box_touch: # stacked green on red
+        if green_red_box_touch or red_green_box_touch: # stacked green on red
             reward = 5
         return reward
+
 
 class TransferCubeEETask(BimanualViperXEETask):
     def __init__(self, random=None):
@@ -311,18 +314,20 @@ class TransferCubeEETask(BimanualViperXEETask):
             contact_pair = (name_geom_1, name_geom_2)
             all_contact_pairs.append(contact_pair)
 
-        touch_left_gripper = ("red_box", "vx300s_left/10_left_gripper_finger") in all_contact_pairs
-        touch_right_gripper = ("red_box", "vx300s_right/10_right_gripper_finger") in all_contact_pairs
+        touch_left_gripper_L = ("red_box", "vx300s_left/10_left_gripper_finger") in all_contact_pairs
+        touch_left_gripper_R = ("red_box", "vx300s_left/10_right_gripper_finger") in all_contact_pairs
+        touch_right_gripper_L = ("red_box", "vx300s_right/10_left_gripper_finger") in all_contact_pairs
+        touch_right_gripper_R = ("red_box", "vx300s_right/10_right_gripper_finger") in all_contact_pairs
         touch_table = ("red_box", "table") in all_contact_pairs
 
         reward = 0
-        if touch_right_gripper:
+        if touch_right_gripper_L or touch_right_gripper_R:
             reward = 1
-        if touch_right_gripper and not touch_table: # lifted
+        if touch_right_gripper_L and touch_right_gripper_R and not touch_table: # lifted
             reward = 2
-        if touch_left_gripper: # attempted transfer
+        if touch_left_gripper_L or touch_left_gripper_R: # attempted transfer
             reward = 3
-        if touch_left_gripper and not touch_table: # successful transfer
+        if touch_left_gripper_L and touch_left_gripper_R and not touch_table: # successful transfer
             reward = 4
         return reward
 
